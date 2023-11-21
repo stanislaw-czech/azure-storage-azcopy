@@ -43,6 +43,7 @@ type IJobPartTransferMgr interface {
 	TransferStatusIgnoringCancellation() common.TransferStatus
 	SetStatus(status common.TransferStatus)
 	SetErrorCode(errorCode int32)
+	SetErrorMessage(errorMessage string)
 	SetNumberOfChunks(numChunks uint32)
 	SetActionAfterLastChunk(f func())
 	ReportTransferDone() uint32
@@ -647,6 +648,14 @@ func (jptm *jobPartTransferMgr) SetErrorCode(errorCode int32) {
 	jptm.jobPartPlanTransfer.SetErrorCode(errorCode, false)
 }
 
+func (jptm *jobPartTransferMgr) ErrorMessage() string {
+	return jptm.jobPartPlanTransfer.ErrorMessage
+}
+
+func (jptm *jobPartTransferMgr) SetErrorMessage(errorMessage string) {
+	jptm.jobPartPlanTransfer.SetErrorMessage(errorMessage)
+}
+
 // TODO: Can we kill this method?
 /*func (jptm *jobPartTransferMgr) ChunksDone() uint32 {
 	return atomic.LoadUint32(&jptm.atomicChunksDone)
@@ -806,6 +815,7 @@ func (jptm *jobPartTransferMgr) failActiveTransfer(typ transferErrorCode, descri
 		fullMsg := fmt.Sprintf("%s. When %s. X-Ms-Request-Id: %s\n", msg, descriptionOfWhereErrorOccurred, requestID) // trailing \n to separate it better from any later, unrelated, log lines
 		jptm.logTransferError(typ, jptm.Info().Source, jptm.Info().Destination, fullMsg, status)
 		jptm.SetStatus(failureStatus)
+		jptm.SetErrorMessage(fullMsg)
 		jptm.SetErrorCode(int32(status)) // TODO: what are the rules about when this needs to be set, and doesn't need to be (e.g. for earlier failures)?
 		// If the status code was 403, it means there was an authentication error and we exit.
 		// User can resume the job if completely ordered with a new sas.
@@ -950,6 +960,7 @@ func (jptm *jobPartTransferMgr) ReportTransferDone() uint32 {
 		TransferStatus:     jptm.jobPartPlanTransfer.TransferStatus(),
 		TransferSize:       uint64(jptm.Info().SourceSize),
 		ErrorCode:          jptm.ErrorCode(),
+		ErrorMessage:       jptm.ErrorMessage(),
 	})
 
 	return jptm.jobPartMgr.ReportTransferDone(jptm.jobPartPlanTransfer.TransferStatus())

@@ -305,8 +305,10 @@ func anyToRemote_file(jptm IJobPartTransferMgr, info TransferInfo, pacer pacer, 
 			if strings.Contains(err.Error(), "Access is denied") && runtime.GOOS == "windows" {
 				suffix = " See --" + common.BackupModeFlagName + " flag if you need to read all files regardless of their permissions"
 			}
-			jptm.LogSendError(info.Source, info.Destination, "Couldn't open source. "+err.Error()+suffix, 0)
+			errorMessage := "Couldn't open source. "+err.Error()+suffix
+			jptm.LogSendError(info.Source, info.Destination, errorMessage, 0)
 			jptm.SetStatus(common.ETransferStatus.Failed())
+			jptm.SetErrorMessage(errorMessage)
 			jptm.ReportTransferDone()
 			return
 		}

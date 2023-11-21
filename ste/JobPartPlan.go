@@ -383,6 +383,8 @@ type JobPartPlanTransfer struct {
 	SourceSize int64
 	// CompletionTime represents the time at which transfer was completed
 	CompletionTime uint64
+	// Error message for failed transfer
+	ErrorMessage string
 
 	// For S2S copy, per Transfer source's properties
 	// TODO: ensure the length is enough
@@ -452,4 +454,8 @@ func (jppt *JobPartPlanTransfer) SetErrorCode(errorCode int32, overwrite bool) {
 	} else {
 		atomic.StoreInt32(&jppt.atomicErrorCode, errorCode)
 	}
+}
+
+func (jppt *JobPartPlanTransfer) SetErrorMessage(errorMessage string) {
+	jppt.ErrorMessage = errorMessage
 }
