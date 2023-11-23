@@ -24,10 +24,9 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Azure/azure-storage-azcopy/v10/common"
-	"github.com/Azure/azure-storage-azcopy/v10/common/parallel"
 	"hash"
 	"io"
 	"io/fs"
@@ -38,6 +37,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/Azure/azure-storage-azcopy/v10/common"
+	"github.com/Azure/azure-storage-azcopy/v10/common/parallel"
 )
 
 const MAX_SYMLINKS_TO_FOLLOW = 40
@@ -192,6 +194,15 @@ func (s symlinkTargetFileInfo) Name() string {
 }
 
 func writeToErrorChannel(errorChannel chan ErrorFileInfo, err ErrorFileInfo) {
+	errorMsg := fmt.Sprintf("Accessing '%s' failed", err.FilePath)
+	common.GetLifecycleMgr().Info(errorMsg)
+	outputBuilder := func(format common.OutputFormat) string {
+		msg := common.ErrorOutput{ErrorMsg: errorMsg, ErrorCode: "403", ErrorContent: err.ErrorMsg.Error()}
+		jsonOutput, err := json.Marshal(msg)
+		common.PanicIfErr(err)
+		return string(jsonOutput)
+	}
+	common.GetLifecycleMgr().ReportError(outputBuilder)
 	if errorChannel != nil {
 		errorChannel <- err
 	}

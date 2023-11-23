@@ -51,6 +51,7 @@ var lcm = func() (lcmgr *lifecycleMgr) {
 type LifecycleMgr interface {
 	Init(OutputBuilder)                                          // let the user know the job has started and initial information like log location
 	Progress(OutputBuilder)                                      // print on the same line over and over again, not allowed to float up
+	ReportError(o OutputBuilder)								 // print error without panicking
 	Exit(OutputBuilder, ExitCode)                                // indicates successful execution exit after printing, allow user to specify exit code
 	Info(string)                                                 // simple print, allowed to float up
 	Dryrun(OutputBuilder)                                        // print files for dry run mode
@@ -285,6 +286,18 @@ func (lcm *lifecycleMgr) Info(msg string) {
 	lcm.msgQueue <- outputMessage{
 		msgContent: infoMsg,
 		msgType:    eOutputMessageType.Info(),
+	}
+}
+
+func (lcm *lifecycleMgr) ReportError(o OutputBuilder) {
+	messageContent := ""
+	if o != nil {
+		messageContent = o(lcm.outputFormat)
+	}
+
+	lcm.msgQueue <- outputMessage{
+		msgContent: messageContent,
+		msgType:    eOutputMessageType.ErrorThatDoesNotCrashTheEntireApplication(),
 	}
 }
 

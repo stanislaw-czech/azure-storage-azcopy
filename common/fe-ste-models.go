@@ -293,6 +293,12 @@ func (o OverwriteOption) String() string {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type ErrorOutput struct {
+	ErrorMsg string
+	ErrorContent string
+	ErrorCode string
+}
+
 type OutputFormat uint32
 
 var EOutputFormat = OutputFormat(0)
