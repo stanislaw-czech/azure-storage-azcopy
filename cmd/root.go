@@ -50,6 +50,7 @@ var azcopyOutputVerbosity common.OutputVerbosity
 var azcopyLogVerbosity common.LogLevel
 var loggerInfo jobLoggerInfo
 var cmdLineCapMegaBitsPerSecond float64
+var cmdLineConcurrencyValue int
 var azcopyAwaitContinue bool
 var azcopyAwaitAllowOpenFiles bool
 var azcopyScanningLogger common.ILoggerResetable
@@ -143,7 +144,7 @@ var rootCmd = &cobra.Command{
 		providePerformanceAdvice := cmd == benchCmd
 
 		// startup of the STE happens here, so that the startup can access the values of command line parameters that are defined for "root" command
-		concurrencySettings := ste.NewConcurrencySettings(azcopyMaxFileAndSocketHandles, preferToAutoTuneGRs)
+		concurrencySettings := ste.NewConcurrencySettings(azcopyMaxFileAndSocketHandles, preferToAutoTuneGRs, cmdLineConcurrencyValue)
 		err = jobsAdmin.MainSTE(concurrencySettings, float64(cmdLineCapMegaBitsPerSecond), common.AzcopyJobPlanFolder, azcopyLogPathFolder, providePerformanceAdvice)
 		if err != nil {
 			return err
@@ -220,6 +221,8 @@ func init() {
 	rootCmd.SetUsageTemplate(strings.Replace((&cobra.Command{}).UsageTemplate(), "Global Flags", "Flags Applying to All Commands", -1))
 
 	rootCmd.PersistentFlags().Float64Var(&cmdLineCapMegaBitsPerSecond, "cap-mbps", 0, "Caps the transfer rate, in megabits per second. Moment-by-moment throughput might vary slightly from the cap. If this option is set to zero, or it is omitted, the throughput isn't capped.")
+	rootCmd.PersistentFlags().IntVar(&cmdLineConcurrencyValue, "concurrency-value", 0, "Max concurrency value")
+
 	rootCmd.PersistentFlags().StringVar(&outputFormatRaw, "output-type", "text", "Format of the command's output. The choices include: text, json. The default value is 'text'.")
 	rootCmd.PersistentFlags().StringVar(&outputVerbosityRaw, "output-level", "default", "Define the output verbosity. Available levels: essential, quiet.")
 	rootCmd.PersistentFlags().StringVar(&logVerbosityRaw, "log-level", "INFO", "Define the log verbosity for the log file, available levels: INFO(all requests/responses), WARNING(slow responses), ERROR(only failed requests), and NONE(no output logs). (default 'INFO').")
